@@ -1,33 +1,97 @@
-﻿@{
-    ViewBag.Title = "Home Page";
-}
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenAI Chatbot</title>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <style>
+        /* Add some basic styling */
+        body {
+            font-family: Arial, sans-serif;
+        }
 
-<main>
-    <section class="row" aria-labelledby="aspnetTitle">
-        <h1 id="title">ASP.NET</h1>
-        <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
-        <p><a href="https://asp.net" class="btn btn-primary btn-md">Learn more &raquo;</a></p>
-    </section>
+        .chat-container {
+            width: 50%;
+            margin: 0 auto;
+            margin-top: 50px;
+        }
 
-    <div class="row">
-        <section class="col-md-4" aria-labelledby="gettingStartedTitle">
-            <h2 id="gettingStartedTitle">Getting started</h2>
-            <p>
-                ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
-                enables a clean separation of concerns and gives you full control over markup
-                for enjoyable, agile development.
-            </p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
-        </section>
-        <section class="col-md-4" aria-labelledby="librariesTitle">
-            <h2 id="librariesTitle">Get more libraries</h2>
-            <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
-        </section>
-        <section class="col-md-4" aria-labelledby="hostingTitle">
-            <h2 id="hostingTitle">Web Hosting</h2>
-            <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
-        </section>
+        .message-container {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .user-message {
+            text-align: right;
+            color: blue;
+        }
+
+        .assistant-message {
+            text-align: left;
+            color: green;
+        }
+
+        .input-container {
+            display: flex;
+        }
+
+            .input-container input {
+                flex: 1;
+                padding: 10px;
+            }
+
+            .input-container button {
+                padding: 10px;
+            }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div id="messages"></div>
+        <div class="input-container">
+            <input type="text" id="messageInput" placeholder="Type your message here..." />
+            <button id="sendMessage">Send</button>
+        </div>
     </div>
-</main>
+
+    <script>
+        $(document).ready(function () {
+            $('#sendMessage').on('click', function () {
+                var messageContent = $('#messageInput').val();
+                if (messageContent.trim() === '') {
+                    alert('Please enter a message.');
+                    return;
+                }
+
+                var userMessage = {
+                    content: messageContent
+                };
+
+                $.ajax({
+                    url: 'http://localhost:4329/api/chatbot/getresponse',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(userMessage),
+                    success: function (data) {
+                        $('#messageInput').val('');
+                        addMessageToChat('user', userMessage.content);
+                        addMessageToChat('assistant', data.choices[0].message.content);
+                    },
+                    error: function (xhr, status, error) {
+                        console.log('Error:', error);
+                        alert('An error occurred. Please try again later.');
+                    }
+                });
+            });
+
+            function addMessageToChat(role, content) {
+                var messageContainer = $('<div class="message-container"></div>');
+                messageContainer.addClass(role === 'user' ? 'user-message' : 'assistant-message');
+                messageContainer.text(content);
+                $('#messages').append(messageContainer);
+            }
+        });
+    </script>
+</body>
+</html>
