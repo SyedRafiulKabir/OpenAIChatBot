@@ -1,12 +1,13 @@
-﻿
-@{
+﻿@{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewBag.Title = "Home";
 }
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>OpenAI Chatbot</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - OpenAI Chatbot</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -29,18 +30,21 @@
             padding: 10px;
             margin-bottom: 10px;
             border-radius: 5px;
+            word-wrap: break-word;
         }
 
         .user-message {
             text-align: right;
             background-color: #007bff;
             color: #fff;
+            margin-left: auto;
         }
 
         .assistant-message {
             text-align: left;
             background-color: #28a745;
             color: #fff;
+            margin-right: auto;
         }
 
         .input-container {
@@ -64,10 +68,17 @@
                 border: none;
                 cursor: pointer;
             }
+
+                .input-container button:disabled {
+                    background-color: #007bff;
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
     </style>
 </head>
 <body>
     <div class="container">
+        <h2 class="text-center">Welcome to the Chat Bot</h2>
         <div class="chat-container">
             <div id="messages"></div>
             <div class="input-container">
@@ -94,15 +105,13 @@
             });
 
             function sendMessage() {
-                var messageContent = $('#messageInput').val();
-                if (messageContent.trim() === '') {
+                var messageContent = $('#messageInput').val().trim();
+                if (!messageContent) {
                     alert('Please enter a message.');
                     return;
                 }
 
-                var userMessage = {
-                    content: messageContent
-                };
+                var userMessage = { content: messageContent };
 
                 $.ajax({
                     url: 'http://localhost:4329/api/chatbot/getresponse',
@@ -112,6 +121,9 @@
                         'Session-Id': sessionId
                     },
                     data: JSON.stringify(userMessage),
+                    beforeSend: function () {
+                        $('#sendMessage').prop('disabled', true);
+                    },
                     success: function (data) {
                         $('#messageInput').val('');
                         addMessageToChat('user', userMessage.content);
@@ -123,8 +135,11 @@
                         }
                     },
                     error: function (xhr, status, error) {
-                        console.log('Error:', error);
+                        console.error('Error:', error);
                         alert('An error occurred. Please try again later.');
+                    },
+                    complete: function () {
+                        $('#sendMessage').prop('disabled', false);
                     }
                 });
             }
@@ -137,6 +152,5 @@
             }
         });
     </script>
-
 </body>
 </html>
