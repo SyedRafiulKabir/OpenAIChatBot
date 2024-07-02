@@ -1,4 +1,5 @@
-﻿@{
+﻿
+@{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewBag.Title = "Home";
 }
@@ -79,6 +80,8 @@
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script>
         $(document).ready(function () {
+            let sessionId = localStorage.getItem('sessionId') || '';
+
             $('#sendMessage').on('click', function () {
                 sendMessage();
             });
@@ -105,11 +108,19 @@
                     url: 'http://localhost:4329/api/chatbot/getresponse',
                     type: 'POST',
                     contentType: 'application/json',
+                    headers: {
+                        'Session-Id': sessionId
+                    },
                     data: JSON.stringify(userMessage),
                     success: function (data) {
                         $('#messageInput').val('');
                         addMessageToChat('user', userMessage.content);
-                        addMessageToChat('assistant', data.choices[0].message.content);
+                        addMessageToChat('assistant', data.response.choices[0].message.content);
+
+                        if (!sessionId) {
+                            sessionId = data.sessionId;
+                            localStorage.setItem('sessionId', sessionId);
+                        }
                     },
                     error: function (xhr, status, error) {
                         console.log('Error:', error);
@@ -126,5 +137,6 @@
             }
         });
     </script>
+
 </body>
 </html>

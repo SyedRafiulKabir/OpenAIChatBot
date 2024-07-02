@@ -1,4 +1,5 @@
-﻿using System;
+﻿//ChatMessage.cs
+using System;
 using System.Collections.Generic;
 
 namespace OpenAIChatBot.Models

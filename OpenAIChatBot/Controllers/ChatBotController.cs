@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -14,11 +15,13 @@ namespace OpenAIChatBot.Controllers
     public class ChatbotController : ApiController
     {
         private readonly OpenAIService _openAIService;
+        private readonly MemoryManager _memoryManager;
 
         public ChatbotController()
         {
             var apiKey = ConfigurationManager.AppSettings["API_KEY"];
             _openAIService = new OpenAIService(apiKey);
+            _memoryManager = new MemoryManager();
         }
 
         [HttpPost]
@@ -30,20 +33,25 @@ namespace OpenAIChatBot.Controllers
                 return BadRequest("Invalid input.");
             }
 
-            // Prepare the messages list for the OpenAI API request
-            var messages = new List<Message>
-    {
-        new Message
-        {
-            role = "user",
-            content = userMessage.content
-        }
-    };
+            var sessionId = Request.Headers.GetValues("Session-Id").FirstOrDefault();
+            if (string.IsNullOrEmpty(sessionId))
+            {
+                sessionId = Guid.NewGuid().ToString();
+            }
+
+            // Retrieve previous messages from memory
+            var messages = _memoryManager.GetMessages(sessionId);
+            messages.Add(new Message { role = "user", content = userMessage.content });
 
             try
             {
                 var response = await _openAIService.GetResponse(messages);
-                return Ok(response);
+
+                // Add the assistant's response to the memory
+                messages.Add(new Message { role = "assistant", content = response.choices[0].message.content });
+                _memoryManager.SaveMessages(sessionId, messages);
+
+                return Ok(new { sessionId = sessionId, response = response });
             }
             catch (HttpRequestException ex) when (ex.Message.Contains("429"))
             {
@@ -60,7 +68,5 @@ namespace OpenAIChatBot.Controllers
                 return InternalServerError(ex);
             }
         }
-
     }
 }
-

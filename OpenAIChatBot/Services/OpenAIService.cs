@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿//OpenAIService.cs
+using Newtonsoft.Json;
 using OpenAIChatBot.Models;
 using System.Collections.Generic;
 using System.Net.Http;
